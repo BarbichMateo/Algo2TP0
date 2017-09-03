@@ -1,5 +1,6 @@
 // Template de arreglo dinamico
 // TODO: SEPARAR LA PARTE DE CÓDIGO EN UN .CPP
+// TODO: Validacion de los trabajos con memoria
 
 #ifndef ARRAYDIN_H
 #define ARRAYDIN_H
@@ -24,6 +25,7 @@ public:
 	bool 		operator!=( const Array<T> & ) const; 
 	T &		operator[ ]( int );
 	void		append(T&);
+//friend	std::ostream & 	operator<< (std::ostream&, Array<T> &);
 
 private:
 	size_t size; 
@@ -128,8 +130,18 @@ template <class T> void Array<T>::resize(int new_size)
 
 template <class T> void Array<T>::append(T &new_thing)
 {
+	// TODO validar trabajo con memoria
 	this->resize(size+1);
 	(*this)[size-1] = new_thing;
 }
 
+/* TODO: VER COMO MEZCLAR AMIGOS Y TEMPLATE
+template <class T> std::ostream & operator<< (std::ostream& os, Array<T> & arr)
+{
+	for(int i=0; i<arr.getSize(); ++i){
+		os<<arr[i]<<std::endl;
+	}
+	return os;
+}
+*/
 #endif
