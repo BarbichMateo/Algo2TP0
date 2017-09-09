@@ -8,35 +8,15 @@ using namespace std;
 
 int main (void)
 {
-	Array <int> v(8),w(3);
-	size_t i;
-	int n;
-	Array <Array <int> > m(2);
-	char c,d;
-
-	v[4] = 3;
-	v[6] = 19;
-	n = 7;
-	v.append(n);
-
-	for(i=0;i<v.getSize();++i){
-		std::cout<<v[i]<<std::endl;
-	}
+	Array <int> * v;
 	
-	m[0] = v;
-	m[1] = w;
+	v = new Array <int> (5);
+	(*v)[3] = 2;
+	cout << (*v)[3];
+	delete v;
+	(*v)[4] = 3;
+	cout << (*v)[4];
+	
 
-
-	for(i=0;i<(m[0]).getSize();++i){
-		std::cout<<(m[0])[i]<<std::endl;
-	}
-	for(i=0;i<(m[1]).getSize();++i){
-		std::cout<<(m[1])[i]<<std::endl;
-	}
-	d = 'i';
-	cin.get(c);
-	if(c == 'c')
-		std::cout << c << "ceeee";
-	std::cout << c << std::endl;
 	return 0;
 }

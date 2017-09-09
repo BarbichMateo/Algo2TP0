@@ -31,20 +31,12 @@ int main(void)
 
 	is.open("archivoTest", ios::in);
 	ptr_is = &is;
+	ch = is.get();
+	ch = is.get();
 	
-	for(int i=0;i<100;++i){
-		if((*ptr_is)>> ch){
-			cout << "Entró" << endl;
-		}
-		cout << ch;
-	}
-//	(*ptr_is)>> d;
-//	cout << d;
-
-//	Array <double> v (3);
-//	n = parse_line_vector (3,v,ptr_is);
-//	cout << n << endl;
-	cout << endl;
+	Array <double> v (3);
+	n = parse_line_vector (3,v,ptr_is);
+	cout << n << endl;
 
 	return 0;
 }
