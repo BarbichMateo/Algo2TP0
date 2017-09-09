@@ -8,15 +8,13 @@ using namespace std;
 
 int main (void)
 {
-	Array <int> * v;
+	Array <double> * v;
 	
-	v = new Array <int> (5);
-	(*v)[3] = 2;
-	cout << (*v)[3];
-	delete v;
-	(*v)[4] = 3;
-	cout << (*v)[4];
-	
+	v = new Array <double> (5);
+	for(int i=0;i<v->getSize();++i){
+		(*v)[i] = i*2.1;
+	}
+	cout << (*v);
 
 	return 0;
 }

@@ -1,6 +1,4 @@
 // Template de arreglo dinamico
-// TODO: SEPARAR LA PARTE DE CÓDIGO EN UN .CPP
-// TODO: Validacion de los trabajos con memoria
 
 #ifndef ARRAYDIN_H
 #define ARRAYDIN_H
@@ -10,8 +8,8 @@
 #include <iostream>
 #include <stdio.h>
 
-#define DEFAULT_SIZE 1
-#define SIZE_CHOP 5
+#define ARRAY_DEFAULT_SIZE 1
+#define ARRAY_SIZE_CHOP 5
 
 
 template <class T> class Array
@@ -27,8 +25,7 @@ public:
 	bool 		operator!=( const Array<T> & ) const; 
 	T &		operator[ ]( int );
 	void		append(T&);
-//void		extend(int )
-//friend	std::ostream & 	operator<< (std::ostream&, Array<T> &);
+//void		extend(int );
 
 private:
 	size_t alloc_size; 
@@ -41,7 +38,7 @@ private:
 
 template <class T> Array<T>::Array()
 {
-	alloc_size = DEFAULT_SIZE;
+	alloc_size = ARRAY_DEFAULT_SIZE;
 	used_size = 0;
 	ptr = new T[alloc_size];
 }
@@ -67,7 +64,7 @@ template <class T> Array<T>::Array( const Array<T> &init )
 template <class T> Array<T>::~Array()
 {
 	if (ptr)
-		delete [ ] ptr; 
+		delete [] ptr; 
 }
 
 template <class T> size_t Array<T>::getSize() const { return used_size; }
@@ -85,8 +82,12 @@ template <class T> Array<T>& Array<T>::operator=( const Array<T> &right )
 		ptr = aux;
 		alloc_size = right.alloc_size; 
 		used_size = right.used_size;
-		for ( int i = 0; i < used_size; i++ )
-			ptr[ i ] = right.ptr[ i ]; 
+		for ( int i = 0; i < used_size; i++ ){
+//for(int j=0;j<alloc_size;++j){
+//std::cout << ptr[j] << std::endl;
+//}
+			ptr[ i ] = (right.ptr)[ i ]; 
+		}
 		return *this; 
 		}
 	else {
@@ -131,11 +132,13 @@ template <class T> void Array<T>::resize(int new_size)
 
 	aux = new T[new_size];
 	if(new_size>used_size){
+		//copio todo
 		for(int i=0;i<used_size;++i){
 			aux[i] = (*this)[i];
 		}
 	}
 	else{
+		//copio hasta donde llega
 		used_size = new_size;
 		for(int i=0;i<used_size;++i){
 			aux[i] = (*this)[i];
@@ -148,23 +151,20 @@ template <class T> void Array<T>::resize(int new_size)
 
 template <class T> void Array<T>::append(T &new_thing)
 {
-	// TODO validar trabajo con memoria
 	if(alloc_size == used_size){
-		this->resize(alloc_size+SIZE_CHOP);
-		(*ptr)[used_size] = new_thing;
-		used_size++;
+		this->resize(alloc_size+ARRAY_SIZE_CHOP);
 	}	
-	(*ptr)[used_size] = new_thing;
+	ptr[used_size] = new_thing;
 	used_size++;
 }
 
-/* TODO: VER COMO MEZCLAR AMIGOS Y TEMPLATE
-template <class T> std::ostream & operator<< (std::ostream& os, Array<T> & arr)
+template <class T> 
+std::ostream & operator<< (std::ostream& os,Array<T> & arr)
 {
 	for(int i=0; i<arr.getSize(); ++i){
-		os<<arr[i]<<std::endl;
+		os<<arr[i]<<"\t";
 	}
+	os << std::endl;
 	return os;
 }
-*/
 #endif

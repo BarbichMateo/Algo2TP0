@@ -8,6 +8,7 @@
 #include <fstream>
 #include <iomanip>
 #include <sstream>
+#include <cctype>
 
 #include "cmdline.h"
 #include "Array.h"
@@ -22,6 +23,7 @@
 #define MSG_ERROR_DISTANCE_DIMENSION "Error al calcular distancia: los elementos no tienen la misma cantidad de dimensiones"
 #define MSG_ERROR_NULL_POINTER "Error puntero nulo"
 #define MSG_ERROR_QUERY "Error en el query"
+#define MSG_ERROR_NO_DATA "Error: el archivo de coordenadas no contiene coordenadas válidas" 
 
 #define POINTS_STARTING_SIZE 1
 #define CSV_DELIMITER ' '
@@ -40,6 +42,7 @@ int parse_line_vector(int dimension, Array <double> & vector, istream * ptr_iss)
 double getDistance(Array <double> &coord1, Array <double> &coord2);
 int get_min_distance(Array < Array <double> > &database,Array <double> & query);
 int make_query (Array <Array <double> > &database, int dimension, istream * query_file, ostream * target_file);
+void move_to_next_line(istream * ptr_iss);
 
 //========= GLOBAL VARS =========
 static option_t options[] = {
@@ -106,6 +109,7 @@ static void opt_output(string const &arg)
 
 //========================================
 
+/*
 ostream & operator<<(ostream &os, Array <double> &v)
 {
 	for(int i=0; i<v.getSize()-1; ++i){
@@ -113,6 +117,7 @@ ostream & operator<<(ostream &os, Array <double> &v)
 	}
 	return os << v[v.getSize()-1]; 
 }
+*/
 
 int read_points_dimension(int &dimension, istream * ptr_iss)
 {
@@ -139,24 +144,29 @@ int load_points (int dimension, Array <Array <double> > & points_tiberium, istre
 	bool eof=false;
 	int st;
 	char ch;
-	Array <double> * ptr_current_array
+	Array <double> * ptr_current_array;
 
-	if( ptr_iss == NULL){
+	if(NULL == ptr_iss){
+		cerr << MSG_ERROR_NULL_POINTER << endl;
 		return 1;
 	}
-	for(int i=0; !eof; ++i){
+	while(!eof){
 		ptr_current_array = new Array <double> (dimension);
 		st = parse_line_vector(dimension, *ptr_current_array, ptr_iss);
-		if(st == -1)
+		if(st == -1){
 			eof = true;
 			delete ptr_current_array;
+		}
 		if(st == 1){
-			--i;
 			delete ptr_current_array;
 		}
 		if(st == 0){
 			points_tiberium.append(*ptr_current_array);	
 		}
+	}
+	if(!points_tiberium.getSize()){
+		cerr << MSG_ERROR_NO_DATA << endl;
+		return 1;
 	}
 	return 0;
 }
@@ -171,23 +181,40 @@ int parse_line_vector(int dimension, Array <double> & vector, istream * ptr_iss)
 // TODO: ACEPTAR ENDL DE WIN Y MAC
 // TODO: VALIDAR LA LECTURA DEL DOBLE
 // TODO: VALIDAR SI HAY MÁS DE UNA COSA DESPUES DEL DELIMITADOR
-// TODO: EOF lo manda por argumento
+
+	if(NULL == ptr_iss){
+		cerr << MSG_ERROR_NULL_POINTER << endl;
+		return 1;
+	}
 
 	for(int i=0;i<dimension;++i){
-		(*ptr_iss)>>aux;
-		ch = ptr_iss->get();
-		if( (i != dimension-1) && (ch != CSV_DELIMITER) ){
+		if(!isdigit(ch = ptr_iss->get())){
 			if(ptr_iss->eof()){
 				return -1;
 			}
+
+			if( (ch != '\n') || (ch != EOF) )
+				move_to_next_line(ptr_iss);
+			cerr << MSG_ERROR_LINE << endl;
+			return 1;
+		}
+		else{
+			ptr_iss->putback(ch);
+		}
+		(*ptr_iss)>>aux;
+		if(ptr_iss->fail()){
+			ifs.close();
+			return -1;
+		}
+		ch = ptr_iss->get();
+		if( (i != dimension-1) && (ch != CSV_DELIMITER) ){
 			//Campo que no debería ser el ultimo y no sigue con delimitador
 			cerr << MSG_ERROR_DELIMITER << endl;
-			
-			if(ch == '\n'){
-				return 1;
+			if(ptr_iss->eof()){
+				return -1;
 			}
-			// Leo hasta el '\n', y le resto a i para que vuelva como estaba
-			while( ((ch = (ptr_iss->get()) ) != '\n') && (ch != EOF));
+			if( (ch != '\n') || (ch != EOF) )
+				move_to_next_line(ptr_iss);
 			return 1;
 		}
 		vector[i] = aux;
@@ -205,12 +232,13 @@ int parse_line_vector(int dimension, Array <double> & vector, istream * ptr_iss)
 double getDistance(Array <double> &coord1, Array <double> &coord2) 
 //devuelve el cuadrado de la distancia entre vectores de double coord1 y coord2
 {
-    size_t i;double s=0;
+    size_t i;
+    double s=0;
     if(coord1.getSize()==coord2.getSize())
     {
         for(i=0;i<coord1.getSize();i++)
         {
-            s+=(coord1[i]-coord2[i])*(coord1[i]-coord2[i]);
+            s+=((coord1[i]-coord2[i])*(coord1[i]-coord2[i]));
         }
         return s;
     }
@@ -222,10 +250,12 @@ double getDistance(Array <double> &coord1, Array <double> &coord2)
 int get_min_distance(Array < Array <double> >& database,Array <double> & query)
 {
 	int database_dimension, min_pos=0;
-	double min_distance=0,new_distance;
+	double min_distance,new_distance;
 
 	database_dimension= database.getSize(); 
-	for (int i=0; i< database_dimension;++i){
+	min_distance = getDistance(database[0],query);
+	
+	for (int i=1; i< database_dimension;++i){
 		new_distance = getDistance(database[i],query);
 		if(new_distance < min_distance){
 			min_distance = new_distance;
@@ -241,7 +271,7 @@ int make_query (Array <Array <double> >& database, int dimension, istream * quer
 	bool eof=false;
 	Array <double> current_array (dimension);
 
-	if(query_file||target_file){
+	if(!query_file||!target_file){
 		cerr << MSG_ERROR_NULL_POINTER << endl;
 		return 1;
 	}
@@ -255,14 +285,19 @@ int make_query (Array <Array <double> >& database, int dimension, istream * quer
 		}
 		if(st == 0){
 			pos = get_min_distance(database, current_array);
-//TODO hacer que eso ande
 			(*target_file) << database[pos] << endl;
 		}
 	}
 	return 0;
 }
 
+void move_to_next_line(istream * ptr_iss)
+{
+	char ch;
 
+	if(ptr_iss)
+		while( ((ch = (ptr_iss->get()) ) != '\n') && (ch != EOF));
+}
 
 int main(int argc, char * const argv[])
 {
@@ -272,39 +307,35 @@ int main(int argc, char * const argv[])
 
 	cmdl.parse(argc, argv);
 	if(read_points_dimension(dimension,points_stream)){
-//  TODO: COMO SE CIERRAN LOS STREAMS?
-//		input_stream->close();
-//		points_stream->close();
-// 		output_stream->close();
+		ifs.close();
+		pfs.close();
+		ofs.close();
 		cerr<<MSG_ERR_FIND_DIMENSION<<endl;
 		return 1;
 	}
 	ptr_points_tiberium = new Array <Array <double> > ();
-//  TODO: validar memoria
 	if(load_points(dimension, *ptr_points_tiberium, points_stream)){
-		delete points_tiberium;
-//		input_stream->close();
-//		points_stream->close();
-//		output_stream->close();
+		delete ptr_points_tiberium;
+		ifs.close();
+		pfs.close();
+		ofs.close();
 		cerr<<MSG_ERR_LOADING_POINTS<<endl;
 		return 1;
 	}
+cout << "esta es la database cargada" << endl
+	<< *ptr_points_tiberium << endl;
 
 	if(make_query(*ptr_points_tiberium,dimension,input_stream,output_stream)){
-		delete &points_tiberium;
+		delete ptr_points_tiberium;
+		ifs.close();
+		pfs.close();
+		ofs.close();
 		cerr<<MSG_ERROR_QUERY << endl;
 		return 1;
 	}
 	
 
 //debug print
-cout << points_tiberium[0].getSize()<<endl;
-for(int i=0;i<points_tiberium.getSize();++i){
-	for(int j=0;j<(points_tiberium[i]).getSize();++j){
-		cout<<points_tiberium[i][j]<<'\t';
-	}
-	cout<<'\n';
-}
 	
 	return 0;
 }
