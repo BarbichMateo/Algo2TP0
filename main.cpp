@@ -43,6 +43,7 @@ double getDistance(Array <double> &coord1, Array <double> &coord2);
 int get_min_distance(Array < Array <double> > &database,Array <double> & query);
 int make_query (Array <Array <double> > &database, int dimension, istream * query_file, ostream * target_file);
 void move_to_next_line(istream * ptr_iss);
+int print_coord_csv(Array <double> v, ostream * ptr_oss);
 
 //========= GLOBAL VARS =========
 static option_t options[] = {
@@ -139,6 +140,20 @@ int read_points_dimension(int &dimension, istream * ptr_iss)
 	return 1;
 }
 
+int print_coord_csv(Array <double> v, ostream * ptr_iss)
+{
+	if(NULL == ptr_iss){
+		cerr << MSG_ERROR_NULL_POINTER << endl;
+		return 1;
+	}
+	for(int i=0;i<v.getSize()-1;++i){
+		*ptr_iss << v[i] << CSV_DELIMITER;
+	}
+	*ptr_iss << v[v.getSize()-1] << endl;
+	
+	return 1;
+}
+
 int load_points (int dimension, Array <Array <double> > & points_tiberium, istream * ptr_iss)
 {
 	bool eof=false;
@@ -189,14 +204,18 @@ int parse_line_vector(int dimension, Array <double> & vector, istream * ptr_iss)
 
 	for(int i=0;i<dimension;++i){
 		if(!isdigit(ch = ptr_iss->get())){
-			if(ptr_iss->eof()){
-				return -1;
-			}
-
-			if( (ch != '\n') || (ch != EOF) )
-				move_to_next_line(ptr_iss);
-			cerr << MSG_ERROR_LINE << endl;
-			return 1;
+			if(ch == '-' && isdigit(ch = ptr_iss->get())){
+				ptr_iss->putback(ch);
+				ptr_iss->putback('-');
+			}else{
+				if(ptr_iss->eof()){
+					return -1;
+				}
+				if( (ch != '\n') || (ch != EOF) )
+					move_to_next_line(ptr_iss);
+				cerr << MSG_ERROR_LINE << endl;
+				return 1;
+				}
 		}
 		else{
 			ptr_iss->putback(ch);
@@ -285,7 +304,7 @@ int make_query (Array <Array <double> >& database, int dimension, istream * quer
 		}
 		if(st == 0){
 			pos = get_min_distance(database, current_array);
-			(*target_file) << database[pos] << endl;
+			print_coord_csv(database[pos],target_file);
 		}
 	}
 	return 0;
