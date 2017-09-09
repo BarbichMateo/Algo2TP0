@@ -10,12 +10,14 @@
 #include <iostream>
 #include <stdio.h>
 
-#define DEFAULT_SIZE 10
+#define DEFAULT_SIZE 1
+#define SIZE_CHOP 5
 
 
 template <class T> class Array
 {
 public:
+	Array();
 	Array(size_t n); 
 	Array( const Array<T> & ); 
 	~Array( ); 
@@ -25,28 +27,39 @@ public:
 	bool 		operator!=( const Array<T> & ) const; 
 	T &		operator[ ]( int );
 	void		append(T&);
+//void		extend(int )
 //friend	std::ostream & 	operator<< (std::ostream&, Array<T> &);
 
 private:
-	size_t size; 
+	size_t alloc_size; 
+	size_t used_size;
 	T *ptr; 
 
 	void 		resize(int );
-
+// TODO: Resize es una función interna que no agranda el tamaño usado. Extend es parte de la interfaz del usuario, y sí agranda el tamaño usado, para que pueda utilizar v[]. La duda es si tiene sentido
 };
 
-template <class T> Array<T>::Array(size_t n=DEFAULT_SIZE)
+template <class T> Array<T>::Array()
 {
-	size = n;
-	ptr = new T[size];
+	alloc_size = DEFAULT_SIZE;
+	used_size = 0;
+	ptr = new T[alloc_size];
+}
+
+template <class T> Array<T>::Array(size_t n)
+{
+	alloc_size = n;
+	used_size = n;
+	ptr = new T[alloc_size];
 }
 
 
 template <class T> Array<T>::Array( const Array<T> &init )
 {
-	size = init.size ;
-	ptr = new T[ size ];
-	for ( int i = 0; i < size; i++ )
+	used_size = init.used_size;
+	alloc_size = init.alloc_size;
+	ptr = new T[ alloc_size ];
+	for ( int i = 0; i < used_size; i++ )
 		ptr[ i ] = init.ptr[ i ]; //debe existir el = para la clase T !
 }
 
@@ -57,36 +70,40 @@ template <class T> Array<T>::~Array()
 		delete [ ] ptr; 
 }
 
-template <class T> size_t Array<T>::getSize() const { return size; }
+template <class T> size_t Array<T>::getSize() const { return used_size; }
 
 template <class T> Array<T>& Array<T>::operator=( const Array<T> &right )
 {
-	if ( &right != this ) {
-		if ( size != right.size ){
-			T *aux; 
-			aux=new T[ right.size ]; 
-			delete [] ptr; 
-			size =right.size ; 
-			ptr=aux; 
-			for ( int i = 0; i < size; i++ )
-				ptr[ i ] = right.ptr[ i ]; 
-			return *this; 
-			}
-		else {
-			for ( int i = 0; i < size; i++ )
-				ptr[ i ] = right.ptr[ i ]; 
-			return *this; 
+	T* aux;
+
+	if ( &right == this ) {
+		return *this;
+	}
+	if ( alloc_size != right.alloc_size ){
+		aux = new T[ right.alloc_size ]; 
+		delete [] ptr; 
+		ptr = aux;
+		alloc_size = right.alloc_size; 
+		used_size = right.used_size;
+		for ( int i = 0; i < used_size; i++ )
+			ptr[ i ] = right.ptr[ i ]; 
+		return *this; 
 		}
+	else {
+		used_size = right.used_size;
+		for ( int i = 0; i < used_size; i++ )
+			ptr[ i ] = right.ptr[ i ]; 
+		return *this; 
 	}
 	return *this;
 }
 
 template <class T> bool Array<T>::operator==( const Array<T> &right ) const
 {
-	if ( size != right.size )
+	if ( used_size != right.used_size )
 		return false; 
 	else{
-		for ( int i = 0; i < size; i++ ){
+		for ( int i = 0; i < used_size; i++ ){
 			if ( ptr[ i ] != right.ptr[ i ] )
        				return false; 
 		}
@@ -104,35 +121,41 @@ template <class T> bool Array<T>::operator!=( const Array<T> &right ) const
 
 template <class T> T & Array<T>::operator [ ]( int subscript )
 {
-	assert( (0 < subscript)|| (subscript < size) ) ; 
+	assert( (0 < subscript)|| (subscript < used_size) ) ; 
 	return ptr[ subscript ]; 
 }
 
 template <class T> void Array<T>::resize(int new_size)
 {
-	T *new_ptr;
+	T *aux;
 
-	new_ptr = new T[new_size];
-	if(new_size>size){
-		for(int i=0;i<size;++i){
-			new_ptr[i] = (*this)[i];
+	aux = new T[new_size];
+	if(new_size>used_size){
+		for(int i=0;i<used_size;++i){
+			aux[i] = (*this)[i];
 		}
 	}
 	else{
-		for(int i=0;i<new_size;++i){
-			new_ptr[i] = (*this)[i];
+		used_size = new_size;
+		for(int i=0;i<used_size;++i){
+			aux[i] = (*this)[i];
 		}
 	}
 	delete [] ptr;
-	ptr = new_ptr;
-	size = new_size;
+	ptr = aux;
+	alloc_size = new_size;
 }
 
 template <class T> void Array<T>::append(T &new_thing)
 {
 	// TODO validar trabajo con memoria
-	this->resize(size+1);
-	(*this)[size-1] = new_thing;
+	if(alloc_size == used_size){
+		this->resize(alloc_size+SIZE_CHOP);
+		(*ptr)[used_size] = new_thing;
+		used_size++;
+	}	
+	(*ptr)[used_size] = new_thing;
+	used_size++;
 }
 
 /* TODO: VER COMO MEZCLAR AMIGOS Y TEMPLATE

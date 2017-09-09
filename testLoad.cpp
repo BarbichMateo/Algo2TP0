@@ -38,6 +38,7 @@ int main(void)
 		}
 		cout << ch;
 	}
+	is.close();
 //	(*ptr_is)>> d;
 //	cout << d;
 

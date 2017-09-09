@@ -145,22 +145,17 @@ int load_points (int dimension, Array <Array <double> > & points_tiberium, istre
 		return 1;
 	}
 	for(int i=0; !eof; ++i){
-		current_array = new Array <double> (dimension);
-		st = parse_line_vector(dimension, current_array, ptr_iss);
+		ptr_current_array = new Array <double> (dimension);
+		st = parse_line_vector(dimension, *ptr_current_array, ptr_iss);
 		if(st == -1)
 			eof = true;
+			delete ptr_current_array;
 		if(st == 1){
 			--i;
-			delete current_array;
+			delete ptr_current_array;
 		}
 		if(st == 0){
-			if(points_tiberium.getSize() == i){
-//TODO Trabajo con memoria, falta validar
-				points_tiberium.append(current_array);	
-			}
-			else{
-				points_tiberium [i] = current_array;
-			}
+			points_tiberium.append(*ptr_current_array);	
 		}
 	}
 	return 0;
@@ -176,8 +171,8 @@ int parse_line_vector(int dimension, Array <double> & vector, istream * ptr_iss)
 // TODO: ACEPTAR ENDL DE WIN Y MAC
 // TODO: VALIDAR LA LECTURA DEL DOBLE
 // TODO: VALIDAR SI HAY MÁS DE UNA COSA DESPUES DEL DELIMITADOR
-
 // TODO: EOF lo manda por argumento
+
 	for(int i=0;i<dimension;++i){
 		(*ptr_iss)>>aux;
 		ch = ptr_iss->get();
@@ -186,26 +181,20 @@ int parse_line_vector(int dimension, Array <double> & vector, istream * ptr_iss)
 				return -1;
 			}
 			//Campo que no debería ser el ultimo y no sigue con delimitador
-cout << (int)ch << i << endl;
 			cerr << MSG_ERROR_DELIMITER << endl;
+			
 			if(ch == '\n'){
 				return 1;
 			}
 			// Leo hasta el '\n', y le resto a i para que vuelva como estaba
-		//	while( ((ch = (ptr_iss->get())) != '\n') && (ch != EOF));
+			while( ((ch = (ptr_iss->get()) ) != '\n') && (ch != EOF));
 			return 1;
 		}
 		vector[i] = aux;
 	}
-
 	//Ahora reviso si el último char leido es el final de linea (devuelvo 0), EOF (devuelvo -1 para que no sigan leyendo) o distinto de eso (algo esta mal en la linea)
-	if( ch == '\n'){
-		// Reviso si es el final del archivo, marcado como \nEOF
-		return 0;
-	}
-	if( ch == EOF ){
-		// Reviso si el archivo termina como EOF directamente
-		// Que la llamen de nuevo para enterarse
+	if( ch == '\n' || ch == EOF){
+		// Termino la línea. Para que se sepa desde fuera si terminó el archivo, hay que llamarlo de nuevo
 		return 0;
 	}
 	// Si no entró en los otros, hubo un error
@@ -230,10 +219,10 @@ double getDistance(Array <double> &coord1, Array <double> &coord2)
     return -1;
 }
 
-int get_min_distance(Array < Array <double> > database,Array <double> & query)
+int get_min_distance(Array < Array <double> >& database,Array <double> & query)
 {
 	int database_dimension, min_pos=0;
-	double min_distance,new_distance;
+	double min_distance=0,new_distance;
 
 	database_dimension= database.getSize(); 
 	for (int i=0; i< database_dimension;++i){
@@ -244,9 +233,9 @@ int get_min_distance(Array < Array <double> > database,Array <double> & query)
 		}
 	}
 	return min_pos;
-} 
+}
 
-int make_query (Array <Array <double> > database, int dimension, istream * query_file, ostream * target_file)
+int make_query (Array <Array <double> >& database, int dimension, istream * query_file, ostream * target_file)
 {
 	int st,pos;
 	bool eof=false;
@@ -257,7 +246,6 @@ int make_query (Array <Array <double> > database, int dimension, istream * query
 		return 1;
 	}
 
-//	current_array =  new Array <double> (dimension);
 	while(!eof){
 		st = parse_line_vector(dimension, current_array, query_file);
 		if(st == -1)
@@ -291,7 +279,7 @@ int main(int argc, char * const argv[])
 		cerr<<MSG_ERR_FIND_DIMENSION<<endl;
 		return 1;
 	}
-	ptr_points_tiberium = new Array <Array <double> > (POINTS_STARTING_SIZE);
+	ptr_points_tiberium = new Array <Array <double> > ();
 //  TODO: validar memoria
 	if(load_points(dimension, *ptr_points_tiberium, points_stream)){
 		delete points_tiberium;
