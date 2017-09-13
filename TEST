@@ -1,0 +1,6 @@
+echo test
+	./DataGenerator -n 1000 -d 10 -o TestPoints -I
+	./DataGenerator -n 1000 -d 10 -o TestQuery
+	date +"%T.%N"
+	./tp0 -p TestPoints -i TestQuery -o TestOut
+	date +"%T.%N"

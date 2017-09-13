@@ -17,5 +17,20 @@
 
 #define POINTS_STARTING_SIZE 1
 #define CSV_DELIMITER ' '
+#define CSV_DELIMITER2 '\t'
+
+
+// Prototipos
+
+using namespace std;
+
+int read_points_dimension(int &dimension, istream * ptr_iss);
+int load_points (int dimension, Array <Array <double> >& points_tiberium, istream * ptr_iss);
+int parse_line_vector(int dimension, Array <double> & vector, istream * ptr_iss);
+
+double getDistance(Array <double> &coord1, Array <double> &coord2);
+int get_min_distance(Array < Array <double> > &database,Array <double> & query);
+int make_query (Array <Array <double> > &database, int dimension, istream * query_file, ostream * target_file);
+int print_coord_csv(Array <double> v, ostream * ptr_oss);
 
 #endif

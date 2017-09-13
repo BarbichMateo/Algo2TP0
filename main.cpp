@@ -12,24 +12,14 @@
 
 #include "cmdline.h"
 #include "Array.h"
+#include "main.h"
 #include "utils.h"
-
-//TODO: SEPARAR EL .H DEL MAIN
 
 using namespace std;
 
 static void opt_points (string const &arg);
 static void opt_input(string const &arg);
 static void opt_output(string const &arg);
-
-int read_points_dimension(int &dimension, istream * ptr_iss);
-int load_points (int dimension, Array <Array <double> >& points_tiberium, istream * ptr_iss);
-int parse_line_vector(int dimension, Array <double> & vector, istream * ptr_iss);
-
-double getDistance(Array <double> &coord1, Array <double> &coord2);
-int get_min_distance(Array < Array <double> > &database,Array <double> & query);
-int make_query (Array <Array <double> > &database, int dimension, istream * query_file, ostream * target_file);
-int print_coord_csv(Array <double> v, ostream * ptr_oss);
 
 //========= GLOBAL VARS =========
 static option_t options[] = {
@@ -144,7 +134,6 @@ int load_points (int dimension, Array <Array <double> > & points_tiberium, istre
 {
 	bool eof=false;
 	int st;
-	char ch;
 	Array <double> * ptr_current_array;
 
 	if(NULL == ptr_iss){
@@ -211,21 +200,15 @@ int parse_line_vector(int dimension, Array <double> & vector, istream * ptr_iss)
 			ifs.close();
 			return -1;
 		}
-		ch = ptr_iss->get();
-		if( (i != dimension-1) && (ch != CSV_DELIMITER) ){
-			//Campo que no debería ser el ultimo y no sigue con delimitador
-			cerr << MSG_ERROR_DELIMITER << endl;
-			if(ptr_iss->eof()){
-				return -1;
-			}
-			if( (ch != '\n') || (ch != EOF) )
-				move_to_next_line(ptr_iss);
-			return 1;
+		if( (i != dimension-1)  ){
+			while( (ch =ptr_iss->get()) == CSV_DELIMITER || ch == CSV_DELIMITER2);
+			ptr_iss->putback(ch);
+			//salteo cosas hasta el siguiente caracter que no sea delimitador
 		}
 		vector[i] = aux;
 	}
 	//Ahora reviso si el último char leido es el final de linea (devuelvo 0), EOF (devuelvo -1 para que no sigan leyendo) o distinto de eso (algo esta mal en la linea)
-	if( ch == '\n' || ch == EOF){
+	if( ((ch =ptr_iss->get()) == '\n') || (ch == EOF) ){
 		// Termino la línea. Para que se sepa desde fuera si terminó el archivo, hay que llamarlo de nuevo
 		return 0;
 	}
@@ -320,8 +303,6 @@ int main(int argc, char * const argv[])
 		cerr<<MSG_ERR_LOADING_POINTS<<endl;
 		return 1;
 	}
-cout << "esta es la database cargada" << endl
-	<< *ptr_points_tiberium << endl;
 
 	if(make_query(*ptr_points_tiberium,dimension,input_stream,output_stream)){
 		delete ptr_points_tiberium;
@@ -332,8 +313,10 @@ cout << "esta es la database cargada" << endl
 		return 1;
 	}
 	
-
-//debug print
+	delete ptr_points_tiberium;
+	ifs.close();
+	pfs.close();
+	ofs.close();
 	
 	return 0;
 }
