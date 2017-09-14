@@ -176,7 +176,7 @@ int parse_line_vector(int dimension, Array <double> & vector, istream * ptr_iss)
 		vector[i] = aux;
 	}
 	//Ahora reviso si el último char leido es el final de linea (devuelvo 0), EOF (devuelvo -1 para que no sigan leyendo) o distinto de eso (algo esta mal en la linea)
-	if( ((ch =ptr_iss->get()) == '\n') || (ch == EOF) ){
+	if( ((ch =ptr_iss->get()) == '\n') || (ch == EOF) || (ch == '\r' && (ch =ptr_iss->get() == '\n')) ){
 		// Termino la línea. Para que se sepa desde fuera si terminó el archivo, hay que llamarlo de nuevo
 		return 0;
 	}
