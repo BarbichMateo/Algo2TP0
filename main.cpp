@@ -168,10 +168,6 @@ int parse_line_vector(int dimension, Array <double> & vector, istream * ptr_iss)
 			ptr_iss->putback(ch);
 		}
 		(*ptr_iss)>>aux;
-		if(ptr_iss->fail()){
-			ifs.close();
-			return -1;
-		}
 		if( (i != dimension-1)  ){
 			while( (ch =ptr_iss->get()) == CSV_DELIMITER || ch == CSV_DELIMITER2);
 			ptr_iss->putback(ch);
