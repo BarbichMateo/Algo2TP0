@@ -25,7 +25,6 @@ public:
 	bool 		operator!=( const Array<T> & ) const; 
 	T &		operator[ ]( int );
 	void		append(T&);
-//void		extend(int );
 
 private:
 	size_t alloc_size; 
@@ -33,7 +32,6 @@ private:
 	T *ptr; 
 
 	void 		resize(int );
-// TODO: Resize es una función interna que no agranda el tamaño usado. Extend es parte de la interfaz del usuario, y sí agranda el tamaño usado, para que pueda utilizar v[]. La duda es si tiene sentido
 };
 
 template <class T> Array<T>::Array()
@@ -83,9 +81,6 @@ template <class T> Array<T>& Array<T>::operator=( const Array<T> &right )
 		alloc_size = right.alloc_size; 
 		used_size = right.used_size;
 		for ( int i = 0; i < used_size; i++ ){
-//for(int j=0;j<alloc_size;++j){
-//std::cout << ptr[j] << std::endl;
-//}
 			ptr[ i ] = (right.ptr)[ i ]; 
 		}
 		return *this; 
