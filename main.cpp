@@ -162,7 +162,7 @@ int parse_line_vector(int dimension, Array <double> & vector, istream * ptr_iss)
 					move_to_next_line(ptr_iss);
 				cerr << MSG_ERROR_LINE << endl;
 				return 1;
-				}
+			}
 		}
 		else{
 			ptr_iss->putback(ch);
@@ -182,6 +182,7 @@ int parse_line_vector(int dimension, Array <double> & vector, istream * ptr_iss)
 	}
 	// Si no entró en los otros, hubo un error
 	cerr << MSG_ERROR_LINE << endl;
+	move_to_next_line(ptr_iss);
 	return 1;
 }
 
